@@ -56,6 +56,12 @@ function initLock() {
   if (!data.pin) {
     isSignup = true;
     setLockMode('signup');
+    return;
+  }
+  // Agar session active hai toh lock screen skip karo
+  if (sessionStorage.getItem('pocketpal_session') === '1') {
+    unlockApp();
+    return;
   }
 }
 
@@ -98,6 +104,7 @@ function handleLock() {
 }
 
 function unlockApp() {
+  sessionStorage.setItem('pocketpal_session', '1');
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('pin-input').value = '';
@@ -105,6 +112,7 @@ function unlockApp() {
 }
 
 function logout() {
+  sessionStorage.removeItem('pocketpal_session');
   document.getElementById('app').style.display = 'none';
   document.getElementById('lock-screen').style.display = 'flex';
   document.getElementById('pin-input').value = '';
@@ -212,10 +220,13 @@ function focusBudget() {
   const panel = document.getElementById('budget-panel');
   const data  = loadData();
   const md    = data[currentMonth] || {};
-  if (md.budget) document.getElementById('budget-input').value = md.budget;
+  document.getElementById('budget-input').value = md.budget || '';
   document.getElementById('panel-month-label').textContent = monthShort(currentMonth);
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  if (panel.style.display === 'block') document.getElementById('budget-input').focus();
+  const isHidden = panel.style.display === 'none' || panel.style.display === '';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    setTimeout(() => document.getElementById('budget-input').focus(), 50);
+  }
 }
 
 function saveBudget() {
