@@ -1,964 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Money Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0f0f13;
-    --bg2: #17171e;
-    --bg3: #1e1e28;
-    --card: #22222d;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
-    --text: #f0eff8;
-    --muted: #8888aa;
-    --accent: #7c6fe0;
-    --accent2: #a98bff;
-    --green: #4ade9a;
-    --green2: #1a4d35;
-    --red: #f0615a;
-    --red2: #4d1a1a;
-    --yellow: #f5c842;
-    --yellow2: #4d3d10;
-    --radius: 14px;
-    --radius-sm: 8px;
-    --font: 'Sora', sans-serif;
-    --mono: 'JetBrains Mono', monospace;
-    --shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
-
-  /* ── LOCK SCREEN ── */
-  #lock-screen {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 1000; gap: 24px; padding: 24px;
-  }
-  .lock-logo { font-size: 48px; }
-  .lock-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-  .lock-sub { color: var(--muted); font-size: 14px; text-align: center; line-height: 1.6; }
-  .lock-box {
-    background: var(--card); border: 1px solid var(--border2);
-    border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-  .lock-box input {
-    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
-    font-family: var(--font); font-size: 15px; padding: 12px 14px;
-    border-radius: var(--radius-sm); width: 100%; outline: none;
-    transition: border-color 0.2s;
-  }
-  .lock-box input:focus { border-color: var(--accent2); }
-  .btn-primary {
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    padding: 13px 20px; border-radius: var(--radius-sm); font-family: var(--font);
-    font-size: 15px; font-weight: 600; transition: background 0.2s, transform 0.1s;
-    width: 100%;
-  }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-primary:active { transform: scale(0.98); }
-  .lock-error { color: var(--red); font-size: 13px; text-align: center; display: none; }
-  .lock-switch { color: var(--accent2); cursor: pointer; font-size: 13px; text-align: center; }
-  .lock-switch:hover { text-decoration: underline; }
-
-  /* ── MAIN APP ── */
-  #app { display: none; min-height: 100vh; }
-
-  /* TOP NAV */
-  .topnav {
-    background: var(--bg2); border-bottom: 1px solid var(--border);
-    padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
-    height: 58px; position: sticky; top: 0; z-index: 100;
-  }
-  .nav-brand { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
-  .nav-brand span { color: var(--accent2); }
-  .nav-month { display: flex; align-items: center; gap: 8px; }
-  .nav-month select {
-    background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
-    font-family: var(--font); font-size: 13px; padding: 6px 10px;
-    border-radius: var(--radius-sm); outline: none; cursor: pointer;
-  }
-  .btn-logout {
-    background: transparent; border: 1px solid var(--border2); color: var(--muted);
-    padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px;
-    cursor: pointer; font-family: var(--font); transition: all 0.2s;
-  }
-  .btn-logout:hover { border-color: var(--red); color: var(--red); }
-
-  /* TABS */
-  .tabs {
-    display: flex; gap: 4px; padding: 16px 20px 0;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-  }
-  .tab-btn {
-    background: transparent; border: none; color: var(--muted);
-    font-family: var(--font); font-size: 14px; padding: 8px 14px;
-    cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all 0.2s; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    font-weight: 500;
-  }
-  .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); background: var(--bg3); }
-
-  .page { display: none; padding: 20px; max-width: 720px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* SUMMARY CARDS */
-  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .sum-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .sum-card.full { grid-column: 1/-1; }
-  .sum-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-  .sum-val { font-size: 22px; font-weight: 700; font-family: var(--mono); letter-spacing: -0.5px; }
-  .sum-val.green { color: var(--green); }
-  .sum-val.red { color: var(--red); }
-  .sum-val.yellow { color: var(--yellow); }
-  .progress-bar { height: 6px; background: var(--bg3); border-radius: 99px; margin-top: 10px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
-
-  /* BUDGET SETUP */
-  .setup-section {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
-  }
-  .setup-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .input-row input, .input-row select {
-    flex: 1; min-width: 120px; background: var(--bg2);
-    border: 1px solid var(--border2); color: var(--text);
-    font-family: var(--font); font-size: 14px;
-    padding: 10px 12px; border-radius: var(--radius-sm); outline: none;
-    transition: border-color 0.2s;
-  }
-  .input-row input:focus, .input-row select:focus { border-color: var(--accent2); }
-  .btn-sm {
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    padding: 10px 16px; border-radius: var(--radius-sm);
-    font-family: var(--font); font-size: 13px; font-weight: 600;
-    transition: background 0.2s; white-space: nowrap;
-  }
-  .btn-sm:hover { background: var(--accent2); }
-  .btn-sm.danger { background: var(--red2); color: var(--red); }
-  .btn-sm.danger:hover { background: var(--red); color: #fff; }
-  .btn-sm.neutral { background: var(--bg3); color: var(--muted); border: 1px solid var(--border2); }
-
-  /* ADD EXPENSE */
-  .add-form {
-    background: var(--card); border: 1px solid var(--border2);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
-  }
-  .add-form h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .form-grid input, .form-grid select, .form-grid textarea {
-    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
-    font-family: var(--font); font-size: 14px; padding: 10px 12px;
-    border-radius: var(--radius-sm); outline: none; transition: border-color 0.2s;
-    width: 100%;
-  }
-  .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { border-color: var(--accent2); }
-  .form-grid .span2 { grid-column: 1/-1; }
-  .form-grid textarea { resize: vertical; min-height: 60px; }
-  .cat-chips { display: flex; flex-wrap: wrap; gap: 7px; grid-column: 1/-1; }
-  .cat-chip {
-    background: var(--bg3); border: 1px solid var(--border2); color: var(--muted);
-    padding: 6px 12px; border-radius: 99px; font-size: 12px; cursor: pointer;
-    transition: all 0.15s; font-family: var(--font);
-  }
-  .cat-chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .cat-chip:hover:not(.selected) { border-color: var(--accent2); color: var(--accent2); }
-
-  /* EXPENSE LIST */
-  .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .list-title { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .expense-item {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 14px;
-    transition: border-color 0.2s;
-  }
-  .expense-item:hover { border-color: var(--border2); }
-  .cat-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-  .exp-info { flex: 1; min-width: 0; }
-  .exp-cat { font-size: 13px; font-weight: 600; }
-  .exp-note { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .exp-date { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: var(--mono); }
-  .exp-amount { font-size: 16px; font-weight: 700; font-family: var(--mono); color: var(--red); flex-shrink: 0; }
-  .exp-del {
-    background: transparent; border: none; color: var(--muted); cursor: pointer;
-    padding: 4px; border-radius: var(--radius-sm); font-size: 16px;
-    transition: color 0.2s; flex-shrink: 0;
-  }
-  .exp-del:hover { color: var(--red); }
-  .empty-state { text-align: center; color: var(--muted); padding: 40px 0; font-size: 14px; }
-
-  /* HISTORY */
-  .month-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
-  }
-  .month-header {
-    padding: 14px 18px; cursor: pointer; display: flex;
-    justify-content: space-between; align-items: center;
-    transition: background 0.15s;
-  }
-  .month-header:hover { background: var(--bg3); }
-  .month-name { font-size: 15px; font-weight: 600; }
-  .month-summary { display: flex; gap: 16px; align-items: center; }
-  .month-stat { text-align: right; }
-  .month-stat .label { font-size: 10px; color: var(--muted); }
-  .month-stat .val { font-size: 14px; font-weight: 700; font-family: var(--mono); }
-  .month-body { display: none; padding: 0 18px 16px; }
-  .month-body.open { display: block; }
-
-  /* CATEGORY BREAKDOWN */
-  .cat-breakdown { margin-top: 14px; }
-  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .cat-row-name { font-size: 13px; width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cat-row-bar { flex: 1; height: 6px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
-  .cat-row-fill { height: 100%; background: var(--accent); border-radius: 99px; }
-  .cat-row-amt { font-size: 12px; font-family: var(--mono); color: var(--muted); width: 70px; text-align: right; flex-shrink: 0; }
-
-  /* SETTINGS */
-  .settings-section {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-  }
-  .settings-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .custom-cat-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .custom-cat-tag {
-    background: var(--bg3); border: 1px solid var(--border2);
-    border-radius: 99px; padding: 5px 12px; font-size: 13px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .custom-cat-tag button {
-    background: none; border: none; color: var(--muted);
-    cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
-  }
-  .custom-cat-tag button:hover { color: var(--red); }
-
-  /* CURRENCY symbol prefix */
-  .currency-wrap { position: relative; }
-  .currency-wrap::before {
-    content: 'Rs.'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-    font-size: 12px; color: var(--muted); font-family: var(--mono); pointer-events: none;
-  }
-  .currency-wrap input { padding-left: 38px !important; }
-
-  @media (max-width: 500px) {
-    .summary-grid { grid-template-columns: 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-grid .span2 { grid-column: 1; }
-    .cat-chips { grid-column: 1; }
-    .month-summary { gap: 10px; }
-    .tabs { overflow-x: auto; }
-    .tab-btn { white-space: nowrap; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PocketPal – Money Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════ LOCK SCREEN -->
-<div id="lock-screen">
-  <div class="lock-logo">💰</div>
-  <div class="lock-title">Money Tracker</div>
-  <p class="lock-sub" id="lock-sub">Track your monthly budget, expenses,<br>and savings — all private to you.</p>
-  <div class="lock-box">
-    <div id="signup-fields" style="display:none; flex-direction:column; gap:12px;">
-      <input type="text" id="reg-name" placeholder="Your name" autocomplete="off">
-    </div>
-    <input type="password" id="pin-input" placeholder="Enter your PIN" maxlength="20" autocomplete="current-password">
-    <div id="pin-confirm-wrap" style="display:none;">
-      <input type="password" id="pin-confirm" placeholder="Confirm PIN" maxlength="20" style="width:100%;">
-    </div>
-    <div class="lock-error" id="lock-error">Incorrect PIN. Try again.</div>
-    <button class="btn-primary" id="lock-btn">Unlock</button>
-    <div class="lock-switch" id="lock-switch">First time? Create account</div>
-  </div>
-</div>
+  <!-- ══════════════ LOCK SCREEN ══════════════ -->
+  <div id="lock-screen">
+    <div class="lock-blob lock-blob-1"></div>
+    <div class="lock-blob lock-blob-2"></div>
+    <div class="lock-blob lock-blob-3"></div>
 
-<!-- ════════════════════════════════════════════ MAIN APP -->
-<div id="app">
-  <nav class="topnav">
-    <div class="nav-brand">💰 <span>Pocket</span>Track</div>
-    <div class="nav-month">
-      <select id="month-select" onchange="switchMonth()"></select>
-      <button class="btn-logout" onclick="logout()">Logout</button>
-    </div>
-  </nav>
+    <div class="lock-card">
+      <div class="lock-logo">💰</div>
+      <h1 class="lock-title">PocketPal</h1>
+      <p class="lock-sub" id="lock-sub">Your cute little money diary 🌸</p>
 
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" onclick="showTab('add')">+ Add</button>
-    <button class="tab-btn" onclick="showTab('history')">History</button>
-    <button class="tab-btn" onclick="showTab('settings')">Settings</button>
+      <div id="signup-fields" style="display:none;">
+        <input class="field" type="text" id="reg-name" placeholder="✏️  Your name" autocomplete="off" />
+      </div>
+
+      <input class="field" type="password" id="pin-input" placeholder="🔒  Enter your PIN" maxlength="20" />
+
+      <div id="pin-confirm-wrap" style="display:none;">
+        <input class="field" type="password" id="pin-confirm" placeholder="🔒  Confirm PIN" maxlength="20" />
+      </div>
+
+      <p class="lock-error" id="lock-error"></p>
+
+      <button class="btn-lock" id="lock-btn">Let me in! ✨</button>
+      <p class="lock-switch" id="lock-switch">New here? Create account →</p>
+    </div>
   </div>
 
-  <!-- ── DASHBOARD ── -->
-  <div class="page active" id="tab-dashboard">
-    <div style="margin-bottom:16px; margin-top:4px;">
-      <span style="font-size:13px; color:var(--muted);">Hello, </span>
-      <span style="font-size:13px; font-weight:600;" id="greet-name">—</span>
-    </div>
+  <!-- ══════════════ MAIN APP ══════════════ -->
+  <div id="app" style="display:none;">
 
-    <!-- Budget Setup -->
-    <div class="setup-section">
-      <h3>Monthly Budget</h3>
-      <div class="input-row">
-        <div class="currency-wrap" style="flex:1;">
-          <input type="number" id="budget-input" placeholder="0" min="0">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-logo">💰</span>
+        <span class="topbar-brand">PocketPal</span>
+      </div>
+      <div class="topbar-right">
+        <select id="month-select" class="month-select" onchange="switchMonth()"></select>
+        <button class="btn-icon" onclick="logout()" title="Logout">👋</button>
+      </div>
+    </header>
+
+    <!-- BOTTOM NAV TABS -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="dashboard" onclick="showTab('dashboard')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-tab="add" onclick="showTab('add')">
+        <span class="nav-fab">＋</span>
+      </button>
+      <button class="nav-btn" data-tab="history" onclick="showTab('history')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">History</span>
+      </button>
+      <button class="nav-btn" data-tab="settings" onclick="showTab('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
+
+    <!-- PAGES -->
+    <main class="pages">
+
+      <!-- ── DASHBOARD ── -->
+      <section class="page active" id="tab-dashboard">
+        <div class="greet-bar">
+          <p class="greet-text">Hey <strong id="greet-name">friend</strong>! 👋</p>
+          <p class="greet-month" id="greet-month"></p>
         </div>
-        <button class="btn-sm" onclick="saveBudget()">Set Budget</button>
-      </div>
-    </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-grid">
-      <div class="sum-card">
-        <div class="sum-label">Total Budget</div>
-        <div class="sum-val" id="s-budget">Rs. 0</div>
-      </div>
-      <div class="sum-card">
-        <div class="sum-label">Total Spent</div>
-        <div class="sum-val red" id="s-spent">Rs. 0</div>
-      </div>
-      <div class="sum-card full">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div class="sum-label" id="leftover-label">Remaining</div>
-            <div class="sum-val" id="s-left" style="color:var(--green)">Rs. 0</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="sum-label">Used</div>
-            <div class="sum-val" id="s-pct" style="font-size:18px;">0%</div>
-          </div>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progress-fill" style="width:0%;background:var(--green);"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Today's Expenses List -->
-    <div class="list-header">
-      <div class="list-title">This Month's Expenses</div>
-      <span id="exp-count" style="font-size:12px;color:var(--muted);"></span>
-    </div>
-    <div id="expense-list">
-      <div class="empty-state">No expenses yet. Tap "+ Add" to get started.</div>
-    </div>
-  </div>
-
-  <!-- ── ADD EXPENSE ── -->
-  <div class="page" id="tab-add">
-    <div class="add-form">
-      <h3>Add Expense</h3>
-      <div class="form-grid">
-        <div class="cat-chips span2" id="cat-chips"></div>
-        <input type="text" id="exp-place" placeholder="Place / Shop name (optional)" class="span2">
-        <div class="currency-wrap" style="grid-column:1;">
-          <input type="number" id="exp-amount" placeholder="Amount" min="0">
-        </div>
-        <input type="date" id="exp-date" style="grid-column:2;">
-        <textarea class="span2" id="exp-note" placeholder="Note (optional)"></textarea>
-        <button class="btn-primary span2" onclick="addExpense()">Add Expense</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── HISTORY ── -->
-  <div class="page" id="tab-history">
-    <div id="history-list">
-      <div class="empty-state">No history yet.</div>
-    </div>
-  </div>
-
-  <!-- ── SETTINGS ── -->
-  <div class="page" id="tab-settings">
-    <div class="settings-section">
-      <h3>Custom Categories</h3>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Add your own spending categories (e.g. "Gym", "Books").</p>
-      <div class="input-row">
-        <input type="text" id="new-cat-name" placeholder="Category name" style="flex:1;">
-        <input type="text" id="new-cat-icon" placeholder="Icon (emoji)" style="width:80px; flex:none;">
-        <button class="btn-sm" onclick="addCustomCat()">Add</button>
-      </div>
-      <div class="custom-cat-list" id="custom-cat-list"></div>
-    </div>
-
-    <div class="settings-section">
-      <h3>Change PIN</h3>
-      <div class="input-row" style="flex-direction:column; align-items:stretch;">
-        <input type="password" id="old-pin" placeholder="Current PIN">
-        <input type="password" id="new-pin" placeholder="New PIN">
-        <button class="btn-sm" onclick="changePin()">Update PIN</button>
-      </div>
-      <p id="pin-msg" style="font-size:12px;color:var(--green);margin-top:8px;display:none;">PIN updated!</p>
-    </div>
-
-    <div class="settings-section">
-      <h3>Danger Zone</h3>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Delete all data for the currently viewed month.</p>
-      <button class="btn-sm danger" onclick="clearMonth()">Clear This Month's Data</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ═══════════════════════════════════════════════
-// STORAGE HELPERS
-// ═══════════════════════════════════════════════
-const STORAGE_KEY = 'pockettrack_v1';
-
-function loadData() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch { return {}; }
-}
-
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-// ═══════════════════════════════════════════════
-// DEFAULT CATEGORIES
-// ═══════════════════════════════════════════════
-const DEFAULT_CATS = [
-  { id: 'food',      label: 'Food',       icon: '🍱', color: '#f5a623' },
-  { id: 'transport', label: 'Bus Fare',   icon: '🚌', color: '#4a90d9' },
-  { id: 'rickshaw',  label: 'Rickshaw',   icon: '🛺', color: '#7b68ee' },
-  { id: 'donation',  label: 'Donation',   icon: '🤲', color: '#4ade9a' },
-  { id: 'outing',    label: 'Outing',     icon: '🎉', color: '#f06ba0' },
-  { id: 'shopping',  label: 'Shopping',   icon: '🛍️',  color: '#ff7f50' },
-  { id: 'health',    label: 'Health',     icon: '💊', color: '#e74c3c' },
-  { id: 'education', label: 'Education',  icon: '📚', color: '#2ecc71' },
-  { id: 'bills',     label: 'Bills',      icon: '📃', color: '#95a5a6' },
-  { id: 'mobile',    label: 'Mobile/Net', icon: '📱', color: '#1abc9c' },
-  { id: 'other',     label: 'Other',      icon: '💸', color: '#aaa' },
-];
-
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-let currentMonth = '';
-let selectedCat = '';
-
-// ═══════════════════════════════════════════════
-// LOCK SCREEN
-// ═══════════════════════════════════════════════
-let isSignup = false;
-
-function initLock() {
-  const data = loadData();
-  const hasAccount = !!data.pin;
-  if (!hasAccount) {
-    isSignup = true;
-    document.getElementById('lock-sub').textContent = 'Set up your PIN to keep your data private.';
-    document.getElementById('lock-btn').textContent = 'Create Account';
-    document.getElementById('lock-switch').textContent = 'Already have an account? Login';
-    document.getElementById('signup-fields').style.display = 'flex';
-    document.getElementById('pin-confirm-wrap').style.display = 'block';
-  }
-}
-
-document.getElementById('lock-btn').addEventListener('click', () => {
-  const data = loadData();
-  const pin = document.getElementById('pin-input').value.trim();
-  const err = document.getElementById('lock-error');
-  err.style.display = 'none';
-
-  if (!pin) { err.textContent = 'Please enter a PIN.'; err.style.display = 'block'; return; }
-
-  if (isSignup) {
-    const name = document.getElementById('reg-name').value.trim();
-    const confirm = document.getElementById('pin-confirm').value.trim();
-    if (!name) { err.textContent = 'Please enter your name.'; err.style.display = 'block'; return; }
-    if (pin !== confirm) { err.textContent = 'PINs do not match.'; err.style.display = 'block'; return; }
-    data.pin = pin;
-    data.name = name;
-    saveData(data);
-    unlockApp();
-  } else {
-    if (pin === data.pin) { unlockApp(); }
-    else { err.textContent = 'Incorrect PIN. Try again.'; err.style.display = 'block'; }
-  }
-});
-
-document.getElementById('pin-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lock-btn').click(); });
-
-document.getElementById('lock-switch').addEventListener('click', () => {
-  isSignup = !isSignup;
-  const err = document.getElementById('lock-error');
-  err.style.display = 'none';
-  if (isSignup) {
-    document.getElementById('lock-btn').textContent = 'Create Account';
-    document.getElementById('lock-switch').textContent = 'Already have an account? Login';
-    document.getElementById('signup-fields').style.display = 'flex';
-    document.getElementById('pin-confirm-wrap').style.display = 'block';
-    document.getElementById('lock-sub').textContent = 'Set up your PIN to keep your data private.';
-  } else {
-    document.getElementById('lock-btn').textContent = 'Unlock';
-    document.getElementById('lock-switch').textContent = 'First time? Create account';
-    document.getElementById('signup-fields').style.display = 'none';
-    document.getElementById('pin-confirm-wrap').style.display = 'none';
-    document.getElementById('lock-sub').textContent = 'Track your monthly budget, expenses,\nand savings — all private to you.';
-  }
-});
-
-function unlockApp() {
-  document.getElementById('lock-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  initApp();
-}
-
-function logout() {
-  document.getElementById('lock-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('pin-input').value = '';
-}
-
-// ═══════════════════════════════════════════════
-// MONTH UTILS
-// ═══════════════════════════════════════════════
-function getMonthKey(date) {
-  const d = date || new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-}
-
-function monthLabel(key) {
-  const [y, m] = key.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return months[parseInt(m) - 1] + ' ' + y;
-}
-
-function getAllMonthKeys(data) {
-  const keys = new Set();
-  keys.add(getMonthKey());
-  Object.keys(data).forEach(k => {
-    if (/^\d{4}-\d{2}$/.test(k)) keys.add(k);
-  });
-  return Array.from(keys).sort((a,b) => b.localeCompare(a));
-}
-
-// ═══════════════════════════════════════════════
-// INIT APP
-// ═══════════════════════════════════════════════
-function initApp() {
-  const data = loadData();
-  currentMonth = getMonthKey();
-
-  document.getElementById('greet-name').textContent = data.name || 'Friend';
-
-  populateMonthSelect();
-  renderDashboard();
-  renderCategoryChips();
-  renderCustomCats();
-  renderHistory();
-
-  // default date to today
-  document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
-}
-
-function populateMonthSelect() {
-  const sel = document.getElementById('month-select');
-  const data = loadData();
-  const keys = getAllMonthKeys(data);
-  sel.innerHTML = '';
-  keys.forEach(k => {
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = monthLabel(k);
-    if (k === currentMonth) o.selected = true;
-    sel.appendChild(o);
-  });
-}
-
-function switchMonth() {
-  currentMonth = document.getElementById('month-select').value;
-  renderDashboard();
-}
-
-// ═══════════════════════════════════════════════
-// BUDGET
-// ═══════════════════════════════════════════════
-function saveBudget() {
-  const val = parseFloat(document.getElementById('budget-input').value);
-  if (!val || val <= 0) { alert('Please enter a valid budget amount.'); return; }
-  const data = loadData();
-  if (!data[currentMonth]) data[currentMonth] = {};
-  data[currentMonth].budget = val;
-  saveData(data);
-  renderDashboard();
-}
-
-// ═══════════════════════════════════════════════
-// CATEGORIES
-// ═══════════════════════════════════════════════
-function getAllCats() {
-  const data = loadData();
-  const custom = (data.customCats || []).map(c => ({
-    id: 'custom_' + c.label.toLowerCase().replace(/\s+/g,'_'),
-    label: c.label,
-    icon: c.icon || '🏷️',
-    color: '#a98bff'
-  }));
-  return [...DEFAULT_CATS, ...custom];
-}
-
-function renderCategoryChips() {
-  const cats = getAllCats();
-  const wrap = document.getElementById('cat-chips');
-  wrap.innerHTML = '';
-  cats.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'cat-chip' + (selectedCat === cat.id ? ' selected' : '');
-    btn.textContent = cat.icon + ' ' + cat.label;
-    btn.onclick = () => {
-      selectedCat = cat.id;
-      renderCategoryChips();
-    };
-    wrap.appendChild(btn);
-  });
-}
-
-// ═══════════════════════════════════════════════
-// ADD EXPENSE
-// ═══════════════════════════════════════════════
-function addExpense() {
-  const amount = parseFloat(document.getElementById('exp-amount').value);
-  const date = document.getElementById('exp-date').value;
-  const note = document.getElementById('exp-note').value.trim();
-  const place = document.getElementById('exp-place').value.trim();
-
-  if (!selectedCat) { alert('Please select a category.'); return; }
-  if (!amount || amount <= 0) { alert('Please enter a valid amount.'); return; }
-  if (!date) { alert('Please select a date.'); return; }
-
-  const monthKey = date.substring(0, 7);
-  const cats = getAllCats();
-  const catObj = cats.find(c => c.id === selectedCat);
-
-  const expense = {
-    id: Date.now(),
-    cat: selectedCat,
-    catLabel: catObj ? catObj.label : selectedCat,
-    catIcon: catObj ? catObj.icon : '💸',
-    amount,
-    date,
-    note,
-    place
-  };
-
-  const data = loadData();
-  if (!data[monthKey]) data[monthKey] = {};
-  if (!data[monthKey].expenses) data[monthKey].expenses = [];
-  data[monthKey].expenses.push(expense);
-  saveData(data);
-
-  // reset form
-  document.getElementById('exp-amount').value = '';
-  document.getElementById('exp-note').value = '';
-  document.getElementById('exp-place').value = '';
-  selectedCat = '';
-  renderCategoryChips();
-
-  // update currentMonth if added to different month
-  currentMonth = monthKey;
-  populateMonthSelect();
-  document.getElementById('month-select').value = monthKey;
-  renderDashboard();
-  renderHistory();
-  showTab('dashboard');
-}
-
-// ═══════════════════════════════════════════════
-// DELETE EXPENSE
-// ═══════════════════════════════════════════════
-function deleteExpense(id) {
-  if (!confirm('Delete this expense?')) return;
-  const data = loadData();
-  const monthData = data[currentMonth];
-  if (!monthData || !monthData.expenses) return;
-  monthData.expenses = monthData.expenses.filter(e => e.id !== id);
-  saveData(data);
-  renderDashboard();
-  renderHistory();
-}
-
-// ═══════════════════════════════════════════════
-// RENDER DASHBOARD
-// ═══════════════════════════════════════════════
-function renderDashboard() {
-  const data = loadData();
-  const monthData = data[currentMonth] || {};
-  const budget = monthData.budget || 0;
-  const expenses = monthData.expenses || [];
-  const spent = expenses.reduce((s, e) => s + e.amount, 0);
-  const left = budget - spent;
-  const pct = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
-
-  if (budget > 0) {
-    document.getElementById('budget-input').value = budget;
-  }
-
-  document.getElementById('s-budget').textContent = 'Rs. ' + budget.toLocaleString();
-  document.getElementById('s-spent').textContent = 'Rs. ' + spent.toLocaleString();
-
-  const leftEl = document.getElementById('s-left');
-  const labelEl = document.getElementById('leftover-label');
-  const fillEl = document.getElementById('progress-fill');
-
-  if (left >= 0) {
-    leftEl.textContent = 'Rs. ' + left.toLocaleString();
-    leftEl.style.color = 'var(--green)';
-    labelEl.textContent = 'Remaining';
-    fillEl.style.background = pct > 80 ? 'var(--yellow)' : 'var(--green)';
-  } else {
-    leftEl.textContent = '- Rs. ' + Math.abs(left).toLocaleString();
-    leftEl.style.color = 'var(--red)';
-    labelEl.textContent = 'Over Budget!';
-    fillEl.style.background = 'var(--red)';
-  }
-
-  document.getElementById('s-pct').textContent = pct + '%';
-  fillEl.style.width = pct + '%';
-
-  // Expense List
-  const listEl = document.getElementById('expense-list');
-  const count = document.getElementById('exp-count');
-  const sorted = [...expenses].sort((a,b) => new Date(b.date) - new Date(a.date));
-
-  count.textContent = sorted.length + ' transaction' + (sorted.length !== 1 ? 's' : '');
-
-  if (sorted.length === 0) {
-    listEl.innerHTML = '<div class="empty-state">No expenses yet. Tap "+ Add" to get started.</div>';
-    return;
-  }
-
-  listEl.innerHTML = sorted.map(e => `
-    <div class="expense-item">
-      <div class="cat-icon" style="background:${getCatColor(e.cat)}22;">
-        <span style="font-size:18px;">${e.catIcon}</span>
-      </div>
-      <div class="exp-info">
-        <div class="exp-cat">${e.catLabel}${e.place ? ' · ' + e.place : ''}</div>
-        ${e.note ? `<div class="exp-note">${e.note}</div>` : ''}
-        <div class="exp-date">${formatDate(e.date)}</div>
-      </div>
-      <div class="exp-amount">− Rs. ${e.amount.toLocaleString()}</div>
-      <button class="exp-del" onclick="deleteExpense(${e.id})" title="Delete">✕</button>
-    </div>
-  `).join('');
-}
-
-// ═══════════════════════════════════════════════
-// RENDER HISTORY
-// ═══════════════════════════════════════════════
-function renderHistory() {
-  const data = loadData();
-  const keys = getAllMonthKeys(data);
-  const el = document.getElementById('history-list');
-
-  const validKeys = keys.filter(k => data[k] && (data[k].budget || (data[k].expenses && data[k].expenses.length)));
-
-  if (validKeys.length === 0) {
-    el.innerHTML = '<div class="empty-state">No history yet.</div>';
-    return;
-  }
-
-  el.innerHTML = validKeys.map(key => {
-    const md = data[key] || {};
-    const expenses = md.expenses || [];
-    const budget = md.budget || 0;
-    const spent = expenses.reduce((s, e) => s + e.amount, 0);
-    const left = budget - spent;
-
-    const catTotals = {};
-    expenses.forEach(e => {
-      if (!catTotals[e.catLabel]) catTotals[e.catLabel] = { total: 0, icon: e.catIcon, cat: e.cat };
-      catTotals[e.catLabel].total += e.amount;
-    });
-
-    const maxCat = Math.max(...Object.values(catTotals).map(c => c.total), 1);
-    const catBreakdown = Object.entries(catTotals)
-      .sort((a,b) => b[1].total - a[1].total)
-      .map(([label, info]) => `
-        <div class="cat-row">
-          <div class="cat-row-name">${info.icon} ${label}</div>
-          <div class="cat-row-bar"><div class="cat-row-fill" style="width:${Math.round((info.total/maxCat)*100)}%;background:${getCatColor(info.cat)};"></div></div>
-          <div class="cat-row-amt">Rs. ${info.total.toLocaleString()}</div>
-        </div>
-      `).join('');
-
-    const leftColor = left >= 0 ? 'var(--green)' : 'var(--red)';
-    const leftLabel = left >= 0 ? 'Left' : 'Over';
-    const leftAmt = left >= 0 ? left : Math.abs(left);
-
-    return `
-      <div class="month-card">
-        <div class="month-header" onclick="toggleHistory('${key}')">
-          <div class="month-name">${monthLabel(key)}</div>
-          <div class="month-summary">
-            <div class="month-stat">
-              <div class="label">Budget</div>
-              <div class="val">Rs. ${budget.toLocaleString()}</div>
+        <!-- Budget Hero Card -->
+        <div class="hero-card">
+          <div class="hero-top">
+            <div>
+              <p class="hero-label">Monthly Budget</p>
+              <p class="hero-amount" id="s-budget">Rs. 0</p>
             </div>
-            <div class="month-stat">
-              <div class="label">Spent</div>
-              <div class="val" style="color:var(--red)">Rs. ${spent.toLocaleString()}</div>
+            <button class="btn-edit-budget" onclick="focusBudget()">✏️ Edit</button>
+          </div>
+          <div class="hero-bar-wrap">
+            <div class="hero-bar">
+              <div class="hero-bar-fill" id="progress-fill"></div>
             </div>
-            <div class="month-stat">
-              <div class="label">${leftLabel}</div>
-              <div class="val" style="color:${leftColor}">Rs. ${leftAmt.toLocaleString()}</div>
+            <span class="hero-pct" id="s-pct">0%</span>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hstat-icon spent-icon">💸</span>
+              <div>
+                <p class="hstat-label">Spent</p>
+                <p class="hstat-val spent-val" id="s-spent">Rs. 0</p>
+              </div>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+              <span class="hstat-icon left-icon" id="left-icon">🟢</span>
+              <div>
+                <p class="hstat-label" id="leftover-label">Remaining</p>
+                <p class="hstat-val" id="s-left" style="color:var(--green)">Rs. 0</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="month-body" id="hist-${key}">
-          ${expenses.length === 0 ? '<p style="color:var(--muted);font-size:13px;">No expenses recorded.</p>' : `
-            <div class="cat-breakdown">${catBreakdown}</div>
-            <div style="margin-top:14px;">
-              ${[...expenses].sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <span>${e.catIcon}</span>
-                    <div>
-                      <div style="font-size:13px;">${e.catLabel}${e.place ? ' · ' + e.place : ''}</div>
-                      <div style="font-size:11px;color:var(--muted);">${formatDate(e.date)}${e.note ? ' · ' + e.note : ''}</div>
-                    </div>
-                  </div>
-                  <div style="font-size:14px;font-family:var(--mono);color:var(--red);">−Rs.${e.amount.toLocaleString()}</div>
-                </div>
-              `).join('')}
+
+        <!-- Budget Input (hidden panel) -->
+        <div class="budget-panel" id="budget-panel" style="display:none;">
+          <p class="panel-title">Set your budget for <span id="panel-month-label"></span></p>
+          <div class="budget-row">
+            <div class="field-wrap">
+              <span class="field-prefix">Rs.</span>
+              <input class="field field-prefixed" type="number" id="budget-input" placeholder="e.g. 5000" min="0" />
             </div>
-          `}
+            <button class="btn-save" onclick="saveBudget()">Save 💾</button>
+          </div>
         </div>
-      </div>`;
-  }).join('');
-}
 
-function toggleHistory(key) {
-  const el = document.getElementById('hist-' + key);
-  if (el) el.classList.toggle('open');
-}
+        <!-- Expense List -->
+        <div class="section-header">
+          <h2 class="section-title">Expenses</h2>
+          <span class="badge" id="exp-count">0</span>
+        </div>
+        <div id="expense-list"></div>
+      </section>
 
-// ═══════════════════════════════════════════════
-// CUSTOM CATEGORIES
-// ═══════════════════════════════════════════════
-function addCustomCat() {
-  const name = document.getElementById('new-cat-name').value.trim();
-  const icon = document.getElementById('new-cat-icon').value.trim();
-  if (!name) { alert('Please enter a category name.'); return; }
+      <!-- ── ADD EXPENSE ── -->
+      <section class="page" id="tab-add">
+        <h2 class="page-heading">Add Expense 💰</h2>
 
-  const data = loadData();
-  if (!data.customCats) data.customCats = [];
-  if (data.customCats.find(c => c.label.toLowerCase() === name.toLowerCase())) {
-    alert('Category already exists.'); return;
-  }
-  data.customCats.push({ label: name, icon: icon || '🏷️' });
-  saveData(data);
-  document.getElementById('new-cat-name').value = '';
-  document.getElementById('new-cat-icon').value = '';
-  renderCustomCats();
-  renderCategoryChips();
-}
+        <div class="add-card">
+          <label class="field-label">Category</label>
+          <div class="cat-chips" id="cat-chips"></div>
 
-function removeCustomCat(label) {
-  const data = loadData();
-  data.customCats = (data.customCats || []).filter(c => c.label !== label);
-  saveData(data);
-  renderCustomCats();
-  renderCategoryChips();
-}
+          <label class="field-label">Amount</label>
+          <div class="field-wrap">
+            <span class="field-prefix">Rs.</span>
+            <input class="field field-prefixed" type="number" id="exp-amount" placeholder="0" min="0" />
+          </div>
 
-function renderCustomCats() {
-  const data = loadData();
-  const cats = data.customCats || [];
-  const el = document.getElementById('custom-cat-list');
-  if (cats.length === 0) {
-    el.innerHTML = '<p style="font-size:13px;color:var(--muted);">No custom categories yet.</p>';
-    return;
-  }
-  el.innerHTML = cats.map(c => `
-    <div class="custom-cat-tag">
-      <span>${c.icon}</span> ${c.label}
-      <button onclick="removeCustomCat('${c.label}')">✕</button>
-    </div>
-  `).join('');
-}
+          <label class="field-label">Date</label>
+          <input class="field" type="date" id="exp-date" />
 
-// ═══════════════════════════════════════════════
-// CHANGE PIN
-// ═══════════════════════════════════════════════
-function changePin() {
-  const oldPin = document.getElementById('old-pin').value;
-  const newPin = document.getElementById('new-pin').value;
-  const msg = document.getElementById('pin-msg');
-  msg.style.display = 'none';
+          <label class="field-label">Place / Shop <span class="optional">(optional)</span></label>
+          <input class="field" type="text" id="exp-place" placeholder="e.g. Al-Fatah, School canteen" />
 
-  const data = loadData();
-  if (oldPin !== data.pin) { alert('Current PIN is incorrect.'); return; }
-  if (!newPin) { alert('Please enter a new PIN.'); return; }
-  data.pin = newPin;
-  saveData(data);
-  document.getElementById('old-pin').value = '';
-  document.getElementById('new-pin').value = '';
-  msg.style.display = 'block';
-}
+          <label class="field-label">Note <span class="optional">(optional)</span></label>
+          <textarea class="field" id="exp-note" rows="2" placeholder="Any detail..."></textarea>
 
-// ═══════════════════════════════════════════════
-// CLEAR MONTH
-// ═══════════════════════════════════════════════
-function clearMonth() {
-  if (!confirm(`Delete ALL data for ${monthLabel(currentMonth)}? This cannot be undone.`)) return;
-  const data = loadData();
-  delete data[currentMonth];
-  saveData(data);
-  populateMonthSelect();
-  renderDashboard();
-  renderHistory();
-}
+          <button class="btn-add" onclick="addExpense()">✨ Add Expense</button>
+        </div>
+      </section>
 
-// ═══════════════════════════════════════════════
-// TABS
-// ═══════════════════════════════════════════════
-function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  const tabs = { dashboard: 0, add: 1, history: 2, settings: 3 };
-  document.querySelectorAll('.tab-btn')[tabs[name]].classList.add('active');
+      <!-- ── HISTORY ── -->
+      <section class="page" id="tab-history">
+        <h2 class="page-heading">History 📅</h2>
+        <div id="history-list"></div>
+      </section>
 
-  if (name === 'add') renderCategoryChips();
-  if (name === 'history') renderHistory();
-  if (name === 'settings') renderCustomCats();
-}
+      <!-- ── SETTINGS ── -->
+      <section class="page" id="tab-settings">
+        <h2 class="page-heading">Settings ⚙️</h2>
 
-// ═══════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════
-function getCatColor(catId) {
-  const cat = DEFAULT_CATS.find(c => c.id === catId);
-  return cat ? cat.color : '#a98bff';
-}
+        <div class="settings-card">
+          <h3 class="settings-title">✨ Custom Categories</h3>
+          <p class="settings-sub">Add categories that aren't in the defaults.</p>
+          <div class="settings-row">
+            <input class="field" type="text" id="new-cat-name" placeholder="Category name" />
+            <input class="field emoji-field" type="text" id="new-cat-icon" placeholder="😊" maxlength="2" />
+            <button class="btn-save" onclick="addCustomCat()">Add</button>
+          </div>
+          <div class="custom-cat-list" id="custom-cat-list"></div>
+        </div>
 
-function formatDate(str) {
-  const d = new Date(str + 'T00:00:00');
-  return d.toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
-}
+        <div class="settings-card">
+          <h3 class="settings-title">🔒 Change PIN</h3>
+          <input class="field" type="password" id="old-pin" placeholder="Current PIN" style="margin-bottom:10px;" />
+          <input class="field" type="password" id="new-pin" placeholder="New PIN" style="margin-bottom:10px;" />
+          <button class="btn-save" onclick="changePin()">Update PIN</button>
+          <p id="pin-msg" style="color:var(--green);font-size:13px;margin-top:8px;display:none;">✅ PIN updated!</p>
+        </div>
 
-// ═══════════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════════
-initLock();
-</script>
+        <div class="settings-card danger-card">
+          <h3 class="settings-title">🗑️ Clear Month Data</h3>
+          <p class="settings-sub">Remove all expenses for the current month.</p>
+          <button class="btn-danger" onclick="clearMonth()">Clear This Month</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
