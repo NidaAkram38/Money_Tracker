@@ -230,13 +230,32 @@ function focusBudget() {
 }
 
 function saveBudget() {
-  const val = parseFloat(document.getElementById('budget-input').value);
-  if (!val || val <= 0) { alert('Please enter a valid budget 💰'); return; }
+  const input = document.getElementById('budget-input').value.trim();
+
+  if (input === '') {
+    alert('Please enter a budget amount 💰');
+    return;
+  }
+
+  const val = Number(input);
+
+  if (isNaN(val) || val < 0) {
+    alert('Enter a valid number 💰');
+    return;
+  }
+
   const data = loadData();
-  if (!data[currentMonth]) data[currentMonth] = {};
+
+  if (!data[currentMonth]) {
+    data[currentMonth] = {};
+  }
+
   data[currentMonth].budget = val;
+
   saveData(data);
+
   document.getElementById('budget-panel').style.display = 'none';
+
   renderDashboard();
 }
 
