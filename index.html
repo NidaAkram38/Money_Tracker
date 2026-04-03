@@ -91,12 +91,14 @@
             </div>
             <button class="btn-edit-budget" onclick="focusBudget()">✏️ Edit</button>
           </div>
+
           <div class="hero-bar-wrap">
             <div class="hero-bar">
               <div class="hero-bar-fill" id="progress-fill"></div>
             </div>
             <span class="hero-pct" id="s-pct">0%</span>
           </div>
+
           <div class="hero-stats">
             <div class="hero-stat">
               <span class="hstat-icon spent-icon">💸</span>
@@ -105,7 +107,9 @@
                 <p class="hstat-val spent-val" id="s-spent">Rs. 0</p>
               </div>
             </div>
+
             <div class="hero-divider"></div>
+
             <div class="hero-stat">
               <span class="hstat-icon left-icon" id="left-icon">🟢</span>
               <div>
@@ -116,7 +120,7 @@
           </div>
         </div>
 
-        <!-- Budget Input (hidden panel) -->
+        <!-- Budget Input Panel -->
         <div class="budget-panel" id="budget-panel" style="display:none;">
           <p class="panel-title">Set your budget for <span id="panel-month-label"></span></p>
           <div class="budget-row">
@@ -128,80 +132,29 @@
           </div>
         </div>
 
-        <!-- Expense List -->
         <div class="section-header">
           <h2 class="section-title">Expenses</h2>
           <span class="badge" id="exp-count">0</span>
         </div>
+
         <div id="expense-list"></div>
-      </section>
-
-      <!-- ── ADD EXPENSE ── -->
-      <section class="page" id="tab-add">
-        <h2 class="page-heading">Add Expense 💰</h2>
-
-        <div class="add-card">
-          <label class="field-label">Category</label>
-          <div class="cat-chips" id="cat-chips"></div>
-
-          <label class="field-label">Amount</label>
-          <div class="field-wrap">
-            <span class="field-prefix">Rs.</span>
-            <input class="field field-prefixed" type="number" id="exp-amount" placeholder="0" min="0" />
-          </div>
-
-          <label class="field-label">Date</label>
-          <input class="field" type="date" id="exp-date" />
-
-          <label class="field-label">Place / Shop <span class="optional">(optional)</span></label>
-          <input class="field" type="text" id="exp-place" placeholder="e.g. Al-Fatah, School canteen" />
-
-          <label class="field-label">Note <span class="optional">(optional)</span></label>
-          <textarea class="field" id="exp-note" rows="2" placeholder="Any detail..."></textarea>
-
-          <button class="btn-add" onclick="addExpense()">✨ Add Expense</button>
-        </div>
-      </section>
-
-      <!-- ── HISTORY ── -->
-      <section class="page" id="tab-history">
-        <h2 class="page-heading">History 📅</h2>
-        <div id="history-list"></div>
-      </section>
-
-      <!-- ── SETTINGS ── -->
-      <section class="page" id="tab-settings">
-        <h2 class="page-heading">Settings ⚙️</h2>
-
-        <div class="settings-card">
-          <h3 class="settings-title">✨ Custom Categories</h3>
-          <p class="settings-sub">Add categories that aren't in the defaults.</p>
-          <div class="settings-row">
-            <input class="field" type="text" id="new-cat-name" placeholder="Category name" />
-            <input class="field emoji-field" type="text" id="new-cat-icon" placeholder="😊" maxlength="2" />
-            <button class="btn-save" onclick="addCustomCat()">Add</button>
-          </div>
-          <div class="custom-cat-list" id="custom-cat-list"></div>
-        </div>
-
-        <div class="settings-card">
-          <h3 class="settings-title">🔒 Change PIN</h3>
-          <input class="field" type="password" id="old-pin" placeholder="Current PIN" style="margin-bottom:10px;" />
-          <input class="field" type="password" id="new-pin" placeholder="New PIN" style="margin-bottom:10px;" />
-          <button class="btn-save" onclick="changePin()">Update PIN</button>
-          <p id="pin-msg" style="color:var(--green);font-size:13px;margin-top:8px;display:none;">✅ PIN updated!</p>
-        </div>
-
-        <div class="settings-card danger-card">
-          <h3 class="settings-title">🗑️ Clear Month Data</h3>
-          <p class="settings-sub">Remove all expenses for the current month.</p>
-          <button class="btn-danger" onclick="clearMonth()">Clear This Month</button>
-        </div>
       </section>
 
     </main>
   </div>
 
   <script src="app.js"></script>
+
+  <script>
+  /* FIX FOR EDIT BUTTON */
+  function focusBudget(){
+      const panel = document.getElementById("budget-panel");
+      const input = document.getElementById("budget-input");
+
+      panel.style.display = "block";
+      input.focus();
+  }
+  </script>
+
 </body>
 </html>
