@@ -1,629 +1,581 @@
 /* ═══════════════════════════════════════════════
-   PocketPal – app.js
-   All app logic: storage, auth, rendering, events
+   PocketPal – style.css
+   Aesthetic: Soft pastel kawaii meets clean finance
    ═══════════════════════════════════════════════ */
 
-'use strict';
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap');
 
-// ══════════════════════════════════════════════
-// STORAGE
-// ══════════════════════════════════════════════
+/* ── TOKENS ── */
+:root {
+  --pink:        #ff7eb3;
+  --pink-light:  #fff0f7;
+  --pink-mid:    #ffd6ea;
+  --purple:      #9b7fe8;
+  --purple-light:#f2eeff;
+  --purple-mid:  #ddd3ff;
+  --teal:        #3ecfb2;
+  --teal-light:  #e4fdf7;
+  --green:       #34c77b;
+  --green-light: #e6faf1;
+  --red:         #ff5a7a;
+  --red-light:   #fff0f2;
+  --yellow:      #ffca3a;
+  --yellow-light:#fffbe6;
+  --orange:      #ff8c42;
+  --orange-light:#fff4ec;
 
-const STORAGE_KEY = 'pocketpal_v2';
+  --bg:          #fdf8ff;
+  --bg2:         #f7f0ff;
+  --surface:     #ffffff;
+  --surface2:    #faf6ff;
+  --border:      #ede6ff;
+  --border2:     #d9cfff;
+  --text:        #2d1f5e;
+  --text2:       #6b5fa0;
+  --text3:       #a89fc8;
 
-function loadData() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-  catch { return {}; }
+  --radius:      18px;
+  --radius-sm:   10px;
+  --radius-pill: 99px;
+  --shadow:      0 4px 20px rgba(155,127,232,0.12);
+  --shadow-md:   0 8px 32px rgba(155,127,232,0.18);
+
+  --font-display: 'Baloo 2', cursive;
+  --font-body:    'Nunito', sans-serif;
 }
 
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-// ══════════════════════════════════════════════
-// DEFAULT CATEGORIES
-// ══════════════════════════════════════════════
-
-const DEFAULT_CATS = [
-  { id: 'food',       label: 'Food',        icon: '🍱', bg: '#fff4e6' },
-  { id: 'transport',  label: 'Bus Fare',    icon: '🚌', bg: '#e8f4ff' },
-  { id: 'rickshaw',   label: 'Rickshaw',    icon: '🛺', bg: '#f2eeff' },
-  { id: 'donation',   label: 'Donation',    icon: '🤲', bg: '#e6faf1' },
-  { id: 'outing',     label: 'Outing',      icon: '🎉', bg: '#fff0fa' },
-  { id: 'shopping',   label: 'Shopping',    icon: '🛍️', bg: '#fff4ec' },
-  { id: 'health',     label: 'Health',      icon: '💊', bg: '#fff0f2' },
-  { id: 'education',  label: 'Education',   icon: '📚', bg: '#e6faf1' },
-  { id: 'bills',      label: 'Bills',       icon: '📃', bg: '#f0f0f0' },
-  { id: 'mobile',     label: 'Mobile/Net',  icon: '📱', bg: '#e4fdf7' },
-  { id: 'snacks',     label: 'Snacks',      icon: '🍟', bg: '#fff9e6' },
-  { id: 'other',      label: 'Other',       icon: '💸', bg: '#f5f5ff' },
-];
-
-// ══════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════
-
-let currentMonth = '';
-let selectedCat  = '';
-let isSignup     = false;
-
-// ══════════════════════════════════════════════
-// LOCK / AUTH
-// ══════════════════════════════════════════════
-
-function initLock() {
-  const data = loadData();
-  if (!data.pin) {
-    isSignup = true;
-    setLockMode('signup');
-    return;
-  }
-  // Agar session active hai toh lock screen skip karo
-  if (sessionStorage.getItem('pocketpal_session') === '1') {
-    unlockApp();
-    return;
-  }
+/* ══════════════════════════════════════════════
+   LOCK SCREEN
+   ══════════════════════════════════════════════ */
+#lock-screen {
+  position: fixed; inset: 0;
+  background: linear-gradient(145deg, #fceeff 0%, #e8f4ff 50%, #ffeef8 100%);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 24px;
+  overflow: hidden;
 }
 
-function setLockMode(mode) {
-  const isS = mode === 'signup';
-  isSignup = isS;
-  document.getElementById('lock-btn').textContent  = isS ? 'Create Account 💰' : 'Let me in! ✨';
-  document.getElementById('lock-switch').textContent = isS ? 'Already have an account? Login →' : 'New here? Create account →';
-  document.getElementById('lock-sub').textContent  = isS ? 'Set up your PIN 🔒' : 'Your cute little money diary 🌸';
-  document.getElementById('signup-fields').style.display     = isS ? 'block' : 'none';
-  document.getElementById('pin-confirm-wrap').style.display  = isS ? 'block' : 'none';
+/* Decorative blobs */
+.lock-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(60px); opacity: 0.35; pointer-events: none;
+}
+.lock-blob-1 {
+  width: 320px; height: 320px;
+  background: #d9b8ff;
+  top: -80px; left: -80px;
+  animation: blobFloat 6s ease-in-out infinite;
+}
+.lock-blob-2 {
+  width: 250px; height: 250px;
+  background: #ffb3d1;
+  bottom: -60px; right: -60px;
+  animation: blobFloat 8s ease-in-out infinite reverse;
+}
+.lock-blob-3 {
+  width: 180px; height: 180px;
+  background: #b3e8ff;
+  top: 40%; left: 10%;
+  animation: blobFloat 7s ease-in-out infinite 2s;
+}
+@keyframes blobFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
 }
 
-document.getElementById('lock-btn').addEventListener('click', handleLock);
-document.getElementById('pin-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleLock(); });
-document.getElementById('lock-switch').addEventListener('click', () => setLockMode(isSignup ? 'login' : 'signup'));
-
-function handleLock() {
-  const pin   = document.getElementById('pin-input').value.trim();
-  const errEl = document.getElementById('lock-error');
-  errEl.textContent = '';
-
-  if (!pin) { errEl.textContent = 'Please enter a PIN 🔒'; return; }
-
-  if (isSignup) {
-    const name    = document.getElementById('reg-name').value.trim();
-    const confirm = document.getElementById('pin-confirm').value.trim();
-    if (!name)       { errEl.textContent = 'Please enter your name ✏️'; return; }
-    if (pin !== confirm) { errEl.textContent = "PINs don't match 😅"; return; }
-    const data  = loadData();
-    data.pin    = pin;
-    data.name   = name;
-    saveData(data);
-  } else {
-    const data = loadData();
-    if (pin !== data.pin) { errEl.textContent = 'Wrong PIN, try again! 🙈'; return; }
-  }
-
-  unlockApp();
+.lock-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255,255,255,0.9);
+  border-radius: 28px;
+  padding: 40px 32px;
+  width: 100%; max-width: 380px;
+  box-shadow: 0 20px 60px rgba(155,127,232,0.2);
+  display: flex; flex-direction: column; gap: 14px;
+  position: relative; z-index: 1;
+  animation: cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes cardIn {
+  from { transform: translateY(30px) scale(0.95); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-function unlockApp() {
-  sessionStorage.setItem('pocketpal_session', '1');
-  document.getElementById('lock-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('pin-input').value = '';
-  initApp();
+.lock-logo {
+  font-size: 56px; text-align: center;
+  animation: logoFloat 2s ease-in-out infinite;
+}
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
-function logout() {
-  sessionStorage.removeItem('pocketpal_session');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('lock-screen').style.display = 'flex';
-  document.getElementById('pin-input').value = '';
+.lock-title {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 800;
+  text-align: center;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-// ══════════════════════════════════════════════
-// MONTH HELPERS
-// ══════════════════════════════════════════════
-
-function getMonthKey(date) {
-  const d = date || new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+.lock-sub {
+  text-align: center; color: var(--text2);
+  font-size: 14px; margin-top: -6px;
 }
 
-function monthLabel(key) {
-  const [y, m] = key.split('-');
-  const names = ['January','February','March','April','May','June',
-                 'July','August','September','October','November','December'];
-  return names[parseInt(m) - 1] + ' ' + y;
+.lock-error {
+  color: var(--red); font-size: 13px;
+  text-align: center; font-weight: 600;
+  min-height: 18px;
 }
 
-function monthShort(key) {
-  const [y, m] = key.split('-');
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return names[parseInt(m) - 1] + ' ' + y;
+.btn-lock {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #fff; border: none; cursor: pointer;
+  padding: 14px; border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 16px; font-weight: 800;
+  width: 100%; transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 6px 20px rgba(155,127,232,0.4);
+  letter-spacing: 0.2px;
+}
+.btn-lock:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(155,127,232,0.5); }
+.btn-lock:active { transform: scale(0.98); }
+
+.lock-switch {
+  text-align: center; color: var(--purple);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: color 0.15s;
+}
+.lock-switch:hover { color: var(--pink); }
+
+/* ══════════════════════════════════════════════
+   FIELDS (shared)
+   ══════════════════════════════════════════════ */
+.field {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px; font-weight: 600;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(155,127,232,0.15);
+}
+.field::placeholder { color: var(--text3); font-weight: 500; }
+
+.field-wrap { position: relative; }
+.field-prefix {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--text3); font-weight: 700;
+  pointer-events: none; font-family: var(--font-body);
+}
+.field-prefixed { padding-left: 42px !important; }
+
+textarea.field { resize: vertical; }
+
+.field-label {
+  display: block; font-size: 12px; font-weight: 800;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 6px; margin-top: 14px;
+}
+.field-label:first-child { margin-top: 0; }
+.optional { font-weight: 500; text-transform: none; color: var(--text3); letter-spacing: 0; }
+
+/* ══════════════════════════════════════════════
+   TOP BAR
+   ══════════════════════════════════════════════ */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  padding: 0 18px;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 12px rgba(155,127,232,0.07);
+}
+.topbar-left { display: flex; align-items: center; gap: 8px; }
+.topbar-logo { font-size: 26px; }
+.topbar-brand {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.month-select {
+  background: var(--purple-light);
+  border: 1.5px solid var(--border2);
+  color: var(--text); font-family: var(--font-body);
+  font-size: 13px; font-weight: 700;
+  padding: 7px 10px; border-radius: var(--radius-pill);
+  outline: none; cursor: pointer;
 }
 
-function getAllMonthKeys(data) {
-  const keys = new Set([getMonthKey()]);
-  Object.keys(data).forEach(k => { if (/^\d{4}-\d{2}$/.test(k)) keys.add(k); });
-  return Array.from(keys).sort((a, b) => b.localeCompare(a));
+.btn-icon {
+  background: var(--pink-light); border: 1.5px solid var(--pink-mid);
+  font-size: 18px; width: 36px; height: 36px; border-radius: var(--radius-pill);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s;
+}
+.btn-icon:hover { transform: scale(1.1); }
+
+/* ══════════════════════════════════════════════
+   BOTTOM NAV
+   ══════════════════════════════════════════════ */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 8px 0 12px;
+  z-index: 50;
+  box-shadow: 0 -4px 20px rgba(155,127,232,0.08);
 }
 
-function formatDate(str) {
-  const d = new Date(str + 'T00:00:00');
-  return d.toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
+.nav-btn {
+  background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 4px 16px; border-radius: var(--radius);
+  transition: transform 0.15s;
+  position: relative;
+}
+.nav-btn:hover { transform: translateY(-2px); }
+
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--font-body); }
+.nav-btn.active .nav-icon { filter: drop-shadow(0 0 4px rgba(155,127,232,0.5)); }
+.nav-btn.active .nav-label { color: var(--purple); }
+
+/* FAB (center Add button) */
+.nav-fab {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #fff; font-size: 28px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(155,127,232,0.45);
+  margin-top: -18px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  line-height: 1;
+}
+.nav-btn:hover .nav-fab { transform: scale(1.08); box-shadow: 0 10px 28px rgba(155,127,232,0.55); }
+
+/* ══════════════════════════════════════════════
+   PAGES & LAYOUT
+   ══════════════════════════════════════════════ */
+.pages {
+  padding: 16px 16px 100px;
+  max-width: 600px; margin: 0 auto;
 }
 
-// ══════════════════════════════════════════════
-// CATEGORY HELPERS
-// ══════════════════════════════════════════════
-
-function getAllCats() {
-  const data   = loadData();
-  const custom = (data.customCats || []).map(c => ({
-    id: 'custom_' + c.label.toLowerCase().replace(/\s+/g, '_'),
-    label: c.label,
-    icon:  c.icon || '🏷️',
-    bg:    '#f2eeff',
-  }));
-  return [...DEFAULT_CATS, ...custom];
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.3s ease both; }
+@keyframes fadeUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
-function getCat(catId) {
-  return getAllCats().find(c => c.id === catId) || { icon: '💸', bg: '#f5f5ff', label: catId };
+.page-heading {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800;
+  color: var(--text);
+  margin-bottom: 18px;
 }
 
-// ══════════════════════════════════════════════
-// INIT APP
-// ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════
+   DASHBOARD
+   ══════════════════════════════════════════════ */
+.greet-bar { margin-bottom: 16px; }
+.greet-text { font-size: 18px; font-weight: 800; color: var(--text); }
+.greet-text strong { color: var(--purple); }
+.greet-month { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 600; }
 
-function initApp() {
-  const data = loadData();
-  currentMonth = getMonthKey();
-
-  document.getElementById('greet-name').textContent = data.name || 'friend';
-  document.getElementById('greet-month').textContent = monthLabel(currentMonth);
-
-  populateMonthSelect();
-  renderDashboard();
-  renderCategoryChips();
-  renderCustomCats();
-  renderHistory();
+/* Hero card */
+.hero-card {
+  background: linear-gradient(135deg, #6c3fc9 0%, #a63d8c 100%);
+  border-radius: 24px;
+  padding: 22px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 32px rgba(108,63,201,0.35);
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  top: -60px; right: -40px;
+}
+.hero-card::after {
+  content: ''; position: absolute;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  bottom: -30px; left: 20px;
 }
 
-// ══════════════════════════════════════════════
-// MONTH SELECT
-// ══════════════════════════════════════════════
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.hero-label { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+.hero-amount { font-family: var(--font-display); font-size: 30px; font-weight: 800; color: #fff; margin-top: 4px; }
 
-function populateMonthSelect() {
-  const sel  = document.getElementById('month-select');
-  const data = loadData();
-  const keys = getAllMonthKeys(data);
-  sel.innerHTML = '';
-  keys.forEach(k => {
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = monthShort(k);
-    if (k === currentMonth) o.selected = true;
-    sel.appendChild(o);
-  });
+.btn-edit-budget {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 12px; font-weight: 700;
+  padding: 6px 12px; border-radius: var(--radius-pill);
+  cursor: pointer; font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.btn-edit-budget:hover { background: rgba(255,255,255,0.28); }
+
+.hero-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.hero-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; }
+.hero-bar-fill { height: 100%; border-radius: 99px; background: #ffe066; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+.hero-pct { font-size: 13px; font-weight: 800; color: #ffe066; min-width: 36px; text-align: right; }
+
+.hero-stats { display: flex; align-items: center; gap: 0; }
+.hero-stat { flex: 1; display: flex; align-items: center; gap: 10px; }
+.hero-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.2); margin: 0 16px; }
+.hstat-icon { font-size: 20px; }
+.hstat-label { font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 700; }
+.hstat-val { font-size: 16px; font-weight: 800; color: #fff; font-family: var(--font-display); }
+.spent-val { color: #ffb3c8 !important; }
+
+/* Budget panel */
+.budget-panel {
+  background: var(--purple-light);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  animation: fadeUp 0.25s ease both;
+}
+.panel-title { font-size: 13px; font-weight: 800; color: var(--text2); margin-bottom: 12px; }
+.budget-row { display: flex; gap: 10px; }
+.budget-row .field-wrap { flex: 1; }
+
+.btn-save {
+  background: var(--purple);
+  color: #fff; border: none; cursor: pointer;
+  padding: 12px 20px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 14px; font-weight: 800;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn-save:hover { background: var(--pink); transform: translateY(-1px); }
+.btn-save:active { transform: scale(0.97); }
+
+/* Section header */
+.section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.section-title { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--text); }
+.badge {
+  background: var(--purple-mid);
+  color: var(--purple);
+  font-size: 11px; font-weight: 800;
+  padding: 3px 9px; border-radius: var(--radius-pill);
 }
 
-function switchMonth() {
-  currentMonth = document.getElementById('month-select').value;
-  document.getElementById('greet-month').textContent = monthLabel(currentMonth);
-  renderDashboard();
+/* Expense items */
+.expense-item {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 13px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: itemIn 0.3s ease both;
+}
+@keyframes itemIn {
+  from { transform: translateX(-10px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.expense-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+.cat-bubble {
+  width: 44px; height: 44px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.exp-info { flex: 1; min-width: 0; }
+.exp-cat { font-size: 14px; font-weight: 800; color: var(--text); }
+.exp-meta { font-size: 12px; color: var(--text3); margin-top: 2px; font-weight: 600; }
+.exp-amount { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--red); flex-shrink: 0; }
+.btn-del {
+  background: var(--red-light); border: none;
+  color: var(--red); font-size: 14px; width: 28px; height: 28px;
+  border-radius: var(--radius-pill); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: transform 0.15s, background 0.15s;
+}
+.btn-del:hover { background: var(--red); color: #fff; transform: scale(1.1); }
+
+.empty-state {
+  text-align: center; padding: 40px 0;
+  color: var(--text3); font-size: 14px; font-weight: 600;
+}
+.empty-state-icon { font-size: 48px; display: block; margin-bottom: 10px; }
+
+/* ══════════════════════════════════════════════
+   ADD PAGE
+   ══════════════════════════════════════════════ */
+.add-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 22px 18px;
+  box-shadow: var(--shadow);
 }
 
-// ══════════════════════════════════════════════
-// BUDGET
-// ══════════════════════════════════════════════
-
-function focusBudget() {
-  const panel = document.getElementById('budget-panel');
-  const data  = loadData();
-  const md    = data[currentMonth] || {};
-  document.getElementById('budget-input').value = md.budget || '';
-  document.getElementById('panel-month-label').textContent = monthShort(currentMonth);
-  const isHidden = panel.style.display === 'none' || panel.style.display === '';
-  panel.style.display = isHidden ? 'block' : 'none';
-  if (isHidden) {
-    setTimeout(() => document.getElementById('budget-input').focus(), 50);
-  }
+/* Category chips */
+.cat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.cat-chip {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  color: var(--text2);
+  padding: 7px 13px; border-radius: var(--radius-pill);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-body);
+}
+.cat-chip:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-light); }
+.cat-chip.selected {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #fff; border-color: transparent;
+  box-shadow: 0 4px 12px rgba(155,127,232,0.35);
+  transform: scale(1.04);
 }
 
-function saveBudget() {
-  const input = document.getElementById('budget-input').value.trim();
-
-  if (input === '') {
-    alert('Please enter a budget amount 💰');
-    return;
-  }
-
-  const val = Number(input);
-
-  if (isNaN(val) || val < 0) {
-    alert('Enter a valid number 💰');
-    return;
-  }
-
-  const data = loadData();
-
-  if (!data[currentMonth]) {
-    data[currentMonth] = {};
-  }
-
-  data[currentMonth].budget = val;
-
-  saveData(data);
-
-  document.getElementById('budget-panel').style.display = 'none';
-
-  renderDashboard();
+.btn-add {
+  width: 100%; margin-top: 20px;
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: #fff; border: none; cursor: pointer;
+  padding: 15px; border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 16px; font-weight: 800;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 6px 20px rgba(155,127,232,0.4);
+  letter-spacing: 0.2px;
 }
+.btn-add:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(155,127,232,0.5); }
+.btn-add:active { transform: scale(0.98); }
 
-// ══════════════════════════════════════════════
-// RENDER DASHBOARD
-// ══════════════════════════════════════════════
-
-function renderDashboard() {
-  const data     = loadData();
-  const md       = data[currentMonth] || {};
-  const budget   = md.budget || 0;
-  const expenses = md.expenses || [];
-  const spent    = expenses.reduce((s, e) => s + e.amount, 0);
-  const left     = budget - spent;
-  const pct      = budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
-
-  // Hero card
-  document.getElementById('s-budget').textContent = 'Rs. ' + budget.toLocaleString();
-  document.getElementById('s-spent').textContent  = 'Rs. ' + spent.toLocaleString();
-  document.getElementById('s-pct').textContent    = pct + '%';
-
-  const fillEl   = document.getElementById('progress-fill');
-  const leftEl   = document.getElementById('s-left');
-  const labelEl  = document.getElementById('leftover-label');
-  const iconEl   = document.getElementById('left-icon');
-
-  fillEl.style.width = pct + '%';
-  if (pct > 90)       fillEl.style.background = '#ff5a7a';
-  else if (pct > 70)  fillEl.style.background = '#ffca3a';
-  else                fillEl.style.background = '#ffe066';
-
-  if (left >= 0) {
-    leftEl.textContent       = 'Rs. ' + left.toLocaleString();
-    leftEl.style.color       = 'var(--green)';
-    labelEl.textContent      = 'Remaining';
-    iconEl.textContent       = '🟢';
-  } else {
-    leftEl.textContent       = '− Rs. ' + Math.abs(left).toLocaleString();
-    leftEl.style.color       = '#ffb3c8';
-    labelEl.textContent      = 'Over Budget!';
-    iconEl.textContent       = '🔴';
-  }
-
-  // Expense list
-  const listEl = document.getElementById('expense-list');
-  const countEl = document.getElementById('exp-count');
-  const sorted = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  countEl.textContent = sorted.length;
-
-  if (sorted.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-state-icon">🌸</span>
-        No expenses yet! Tap <strong>＋</strong> to add one.
-      </div>`;
-    return;
-  }
-
-  listEl.innerHTML = sorted.map((e, i) => {
-    const cat = getCat(e.cat);
-    const meta = [e.place, e.note, formatDate(e.date)].filter(Boolean).join(' · ');
-    return `
-      <div class="expense-item" style="animation-delay:${i * 40}ms">
-        <div class="cat-bubble" style="background:${cat.bg}">${cat.icon}</div>
-        <div class="exp-info">
-          <div class="exp-cat">${cat.label}</div>
-          <div class="exp-meta">${meta}</div>
-        </div>
-        <div class="exp-amount">−Rs.${e.amount.toLocaleString()}</div>
-        <button class="btn-del" onclick="deleteExpense(${e.id})" title="Delete">✕</button>
-      </div>`;
-  }).join('');
+/* ══════════════════════════════════════════════
+   HISTORY
+   ══════════════════════════════════════════════ */
+.month-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
 }
-
-// ══════════════════════════════════════════════
-// DELETE EXPENSE
-// ══════════════════════════════════════════════
-
-function deleteExpense(id) {
-  if (!confirm('Delete this expense? 🗑️')) return;
-  const data = loadData();
-  const md   = data[currentMonth];
-  if (!md || !md.expenses) return;
-  md.expenses = md.expenses.filter(e => e.id !== id);
-  saveData(data);
-  renderDashboard();
-  renderHistory();
+.month-header {
+  padding: 16px 18px; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  transition: background 0.15s;
 }
+.month-header:hover { background: var(--surface2); }
+.month-name { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--text); }
 
-// ══════════════════════════════════════════════
-// CATEGORY CHIPS
-// ══════════════════════════════════════════════
-
-function renderCategoryChips() {
-  const cats = getAllCats();
-  const wrap = document.getElementById('cat-chips');
-  wrap.innerHTML = cats.map(cat => `
-    <button class="cat-chip ${selectedCat === cat.id ? 'selected' : ''}"
-            onclick="selectCat('${cat.id}')">
-      ${cat.icon} ${cat.label}
-    </button>
-  `).join('');
+.month-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-stat {
+  background: var(--purple-light);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px; text-align: center;
 }
+.chip-stat .cs-label { font-size: 9px; color: var(--text3); font-weight: 800; text-transform: uppercase; display: block; }
+.chip-stat .cs-val { font-size: 13px; font-weight: 800; color: var(--text); display: block; font-family: var(--font-display); }
+.chip-stat.spent .cs-val { color: var(--red); }
+.chip-stat.left .cs-val { color: var(--green); }
+.chip-stat.over .cs-val { color: var(--red); }
 
-function selectCat(id) {
-  selectedCat = id;
-  renderCategoryChips();
+.month-body { display: none; padding: 0 18px 18px; border-top: 1.5px solid var(--border); }
+.month-body.open { display: block; }
+
+.cat-breakdown { margin-bottom: 14px; margin-top: 14px; }
+.cat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.cat-row-icon { font-size: 16px; width: 22px; }
+.cat-row-name { font-size: 12px; font-weight: 700; color: var(--text2); width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-row-bar { flex: 1; height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
+.cat-row-fill { height: 100%; border-radius: 99px; background: var(--purple); }
+.cat-row-amt { font-size: 12px; font-weight: 800; color: var(--text3); width: 72px; text-align: right; font-family: var(--font-display); }
+
+.hist-expense-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px dashed var(--border);
 }
+.hist-expense-row:last-child { border-bottom: none; }
+.hist-exp-left { display: flex; align-items: center; gap: 8px; }
+.hist-exp-cat { font-size: 13px; font-weight: 800; color: var(--text); }
+.hist-exp-meta { font-size: 11px; color: var(--text3); font-weight: 600; }
+.hist-exp-amt { font-size: 14px; font-weight: 800; color: var(--red); font-family: var(--font-display); }
 
-// ══════════════════════════════════════════════
-// ADD EXPENSE
-// ══════════════════════════════════════════════
-
-function addExpense() {
-  const amount = parseFloat(document.getElementById('exp-amount').value);
-  const date   = document.getElementById('exp-date').value;
-  const note   = document.getElementById('exp-note').value.trim();
-  const place  = document.getElementById('exp-place').value.trim();
-
-  if (!selectedCat)       { alert('Please choose a category 🏷️'); return; }
-  if (!amount || amount <= 0) { alert('Please enter the amount 💰'); return; }
-  if (!date)              { alert('Please pick a date 📅'); return; }
-
-  const monthKey = date.substring(0, 7);
-  const cat      = getCat(selectedCat);
-
-  const expense = {
-    id: Date.now(),
-    cat:      selectedCat,
-    catLabel: cat.label,
-    catIcon:  cat.icon,
-    amount,
-    date,
-    note,
-    place,
-  };
-
-  const data = loadData();
-  if (!data[monthKey])           data[monthKey] = {};
-  if (!data[monthKey].expenses)  data[monthKey].expenses = [];
-  data[monthKey].expenses.push(expense);
-  saveData(data);
-
-  // Reset form
-  document.getElementById('exp-amount').value = '';
-  document.getElementById('exp-note').value   = '';
-  document.getElementById('exp-place').value  = '';
-  selectedCat = '';
-  renderCategoryChips();
-
-  // Switch to that month and show dashboard
-  currentMonth = monthKey;
-  populateMonthSelect();
-  document.getElementById('month-select').value = monthKey;
-  document.getElementById('greet-month').textContent = monthLabel(monthKey);
-  renderDashboard();
-  renderHistory();
-  showTab('dashboard');
+/* ══════════════════════════════════════════════
+   SETTINGS
+   ══════════════════════════════════════════════ */
+.settings-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
 }
+.settings-title { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.settings-sub { font-size: 13px; color: var(--text3); font-weight: 600; margin-bottom: 14px; }
 
-// ══════════════════════════════════════════════
-// RENDER HISTORY
-// ══════════════════════════════════════════════
+.settings-row { display: flex; gap: 8px; align-items: center; }
+.settings-row .field { flex: 1; }
+.emoji-field { width: 60px !important; flex: none !important; text-align: center; font-size: 20px; padding: 8px; }
 
-function renderHistory() {
-  const data  = loadData();
-  const keys  = getAllMonthKeys(data);
-  const el    = document.getElementById('history-list');
-
-  const valid = keys.filter(k => data[k] && (data[k].budget || (data[k].expenses && data[k].expenses.length)));
-
-  if (valid.length === 0) {
-    el.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📅</span>No history yet!</div>`;
-    return;
-  }
-
-  el.innerHTML = valid.map(key => {
-    const md       = data[key] || {};
-    const expenses = md.expenses || [];
-    const budget   = md.budget || 0;
-    const spent    = expenses.reduce((s, e) => s + e.amount, 0);
-    const left     = budget - spent;
-
-    // Category totals
-    const totals = {};
-    expenses.forEach(e => {
-      if (!totals[e.cat]) totals[e.cat] = { total: 0, icon: e.catIcon, cat: e.cat };
-      totals[e.cat].total += e.amount;
-    });
-    const maxAmt = Math.max(...Object.values(totals).map(t => t.total), 1);
-
-    const breakdown = Object.entries(totals)
-      .sort((a, b) => b[1].total - a[1].total)
-      .map(([catId, info]) => {
-        const cat = getCat(catId);
-        return `
-          <div class="cat-row">
-            <span class="cat-row-icon">${cat.icon}</span>
-            <span class="cat-row-name">${cat.label}</span>
-            <div class="cat-row-bar">
-              <div class="cat-row-fill" style="width:${Math.round((info.total/maxAmt)*100)}%"></div>
-            </div>
-            <span class="cat-row-amt">Rs.${info.total.toLocaleString()}</span>
-          </div>`;
-      }).join('');
-
-    const expRows = [...expenses]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(e => {
-        const cat  = getCat(e.cat);
-        const meta = [e.place, e.note, formatDate(e.date)].filter(Boolean).join(' · ');
-        return `
-          <div class="hist-expense-row">
-            <div class="hist-exp-left">
-              <span style="font-size:18px;">${cat.icon}</span>
-              <div>
-                <div class="hist-exp-cat">${cat.label}</div>
-                <div class="hist-exp-meta">${meta}</div>
-              </div>
-            </div>
-            <div class="hist-exp-amt">−Rs.${e.amount.toLocaleString()}</div>
-          </div>`;
-      }).join('');
-
-    const leftClass = left >= 0 ? 'left' : 'over';
-    const leftLabel = left >= 0 ? 'Left' : 'Over';
-    const leftAmt   = Math.abs(left);
-
-    return `
-      <div class="month-card">
-        <div class="month-header" onclick="toggleHistory('${key}')">
-          <div class="month-name">${monthLabel(key)}</div>
-          <div class="month-chips">
-            <div class="chip-stat">
-              <span class="cs-label">Budget</span>
-              <span class="cs-val">Rs.${budget.toLocaleString()}</span>
-            </div>
-            <div class="chip-stat spent">
-              <span class="cs-label">Spent</span>
-              <span class="cs-val">Rs.${spent.toLocaleString()}</span>
-            </div>
-            <div class="chip-stat ${leftClass}">
-              <span class="cs-label">${leftLabel}</span>
-              <span class="cs-val">Rs.${leftAmt.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-        <div class="month-body" id="hist-${key}">
-          ${expenses.length === 0
-            ? '<p style="color:var(--text3);font-size:13px;padding-top:12px;">No expenses recorded.</p>'
-            : `<div class="cat-breakdown">${breakdown}</div>${expRows}`
-          }
-        </div>
-      </div>`;
-  }).join('');
+.custom-cat-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.custom-cat-tag {
+  background: var(--purple-light);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-pill);
+  padding: 6px 12px; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px; color: var(--text);
 }
-
-function toggleHistory(key) {
-  const el = document.getElementById('hist-' + key);
-  if (el) el.classList.toggle('open');
+.custom-cat-tag button {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 14px; padding: 0; line-height: 1;
+  transition: color 0.15s;
 }
+.custom-cat-tag button:hover { color: var(--red); }
 
-// ══════════════════════════════════════════════
-// CUSTOM CATEGORIES
-// ══════════════════════════════════════════════
-
-function addCustomCat() {
-  const name = document.getElementById('new-cat-name').value.trim();
-  const icon = document.getElementById('new-cat-icon').value.trim();
-  if (!name) { alert('Please enter a category name 🏷️'); return; }
-
-  const data = loadData();
-  if (!data.customCats) data.customCats = [];
-  if (data.customCats.find(c => c.label.toLowerCase() === name.toLowerCase())) {
-    alert('That category already exists! 😅'); return;
-  }
-
-  data.customCats.push({ label: name, icon: icon || '🏷️' });
-  saveData(data);
-  document.getElementById('new-cat-name').value = '';
-  document.getElementById('new-cat-icon').value = '';
-  renderCustomCats();
-  renderCategoryChips();
+.danger-card { border-color: #ffd6d6; background: #fff8f8; }
+.btn-danger {
+  background: var(--red-light); color: var(--red);
+  border: 1.5px solid #ffb3c0; cursor: pointer;
+  padding: 11px 20px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 14px; font-weight: 800;
+  transition: all 0.15s;
 }
+.btn-danger:hover { background: var(--red); color: #fff; }
 
-function removeCustomCat(label) {
-  const data = loadData();
-  data.customCats = (data.customCats || []).filter(c => c.label !== label);
-  saveData(data);
-  renderCustomCats();
-  renderCategoryChips();
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════ */
+@media (max-width: 420px) {
+  .hero-amount { font-size: 26px; }
+  .month-chips { gap: 6px; }
+  .chip-stat { padding: 3px 8px; }
 }
-
-function renderCustomCats() {
-  const data = loadData();
-  const cats = data.customCats || [];
-  const el   = document.getElementById('custom-cat-list');
-
-  if (cats.length === 0) {
-    el.innerHTML = '<p style="font-size:13px;color:var(--text3);font-weight:600;">No custom categories yet 🌸</p>';
-    return;
-  }
-  el.innerHTML = cats.map(c => `
-    <div class="custom-cat-tag">
-      <span>${c.icon}</span> ${c.label}
-      <button onclick="removeCustomCat('${c.label}')">✕</button>
-    </div>
-  `).join('');
-}
-
-// ══════════════════════════════════════════════
-// CHANGE PIN
-// ══════════════════════════════════════════════
-
-function changePin() {
-  const oldPin = document.getElementById('old-pin').value;
-  const newPin = document.getElementById('new-pin').value;
-  const msg    = document.getElementById('pin-msg');
-  msg.style.display = 'none';
-
-  const data = loadData();
-  if (oldPin !== data.pin) { alert('Current PIN is wrong! 🙈'); return; }
-  if (!newPin)             { alert('Please enter a new PIN'); return; }
-
-  data.pin = newPin;
-  saveData(data);
-  document.getElementById('old-pin').value = '';
-  document.getElementById('new-pin').value = '';
-  msg.style.display = 'block';
-}
-
-// ══════════════════════════════════════════════
-// CLEAR MONTH
-// ══════════════════════════════════════════════
-
-function clearMonth() {
-  if (!confirm(`Delete ALL data for ${monthLabel(currentMonth)}? 🗑️\nThis can't be undone!`)) return;
-  const data = loadData();
-  delete data[currentMonth];
-  saveData(data);
-  populateMonthSelect();
-  renderDashboard();
-  renderHistory();
-}
-
-// ══════════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════════
-
-function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-  document.getElementById('tab-' + name).classList.add('active');
-  const btn = document.querySelector(`.nav-btn[data-tab="${name}"]`);
-  if (btn) btn.classList.add('active');
-
-  if (name === 'add') {
-    renderCategoryChips();
-    document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
-  }
-  if (name === 'history')  renderHistory();
-  if (name === 'settings') renderCustomCats();
-}
-
-// ══════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════
-
-initLock();
