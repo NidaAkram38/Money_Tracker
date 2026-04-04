@@ -1,106 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PocketPal</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PocketPal – Money Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<!-- LOCK SCREEN -->
-<div id="lock-screen" class="lock">
-  <h2>PocketPal 🔒</h2>
-  <input id="pin-input" type="password" placeholder="Enter PIN">
-  <button id="lock-btn">Unlock</button>
-  <p id="lock-error"></p>
-</div>
+  <!-- LOCK SCREEN -->
+  <div id="lock-screen">
+    <div class="lock-blob lock-blob-1"></div>
+    <div class="lock-blob lock-blob-2"></div>
+    <div class="lock-blob lock-blob-3"></div>
+    <div class="lock-card">
+      <div class="lock-logo">💰</div>
+      <h1 class="lock-title">PocketPal</h1>
+      <p class="lock-sub" id="lock-sub">Your cute little money diary 🌸</p>
+      <div id="signup-fields" style="display:none;">
+        <input class="field" type="text" id="reg-name" placeholder="✏️  Your name" autocomplete="off" />
+      </div>
+      <input class="field" type="password" id="pin-input" placeholder="🔒  Enter your PIN" maxlength="20" />
+      <div id="pin-confirm-wrap" style="display:none;">
+        <input class="field" type="password" id="pin-confirm" placeholder="🔒  Confirm PIN" maxlength="20" />
+      </div>
+      <p class="lock-error" id="lock-error"></p>
+      <button class="btn-lock" id="lock-btn">Let me in! ✨</button>
+      <p class="lock-switch" id="lock-switch">New here? Create account →</p>
+    </div>
+  </div>
 
-<!-- APP -->
-<div id="app">
+  <!-- MAIN APP -->
+  <div id="app" style="display:none;">
 
-<header class="top">
-  <h2>Hello <span id="greet-name">friend</span> 👋</h2>
-  <p id="greet-month"></p>
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-logo">💰</span>
+        <span class="topbar-brand">PocketPal</span>
+      </div>
+      <div class="topbar-right">
+        <select id="month-select" class="month-select" onchange="switchMonth()"></select>
+        <button class="btn-icon" onclick="logout()" title="Logout">👋</button>
+      </div>
+    </header>
 
-  <select id="month-select" onchange="switchMonth()"></select>
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="dashboard" onclick="showTab('dashboard')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-tab="add" onclick="showTab('add')">
+        <span class="nav-fab">＋</span>
+      </button>
+      <button class="nav-btn" data-tab="history" onclick="showTab('history')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">History</span>
+      </button>
+      <button class="nav-btn" data-tab="settings" onclick="showTab('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
 
-  <button onclick="focusBudget()">✏️ Edit Budget</button>
-</header>
+    <main class="pages">
 
-<!-- BUDGET PANEL -->
-<div id="budget-panel">
-  <input id="budget-input" type="number" placeholder="Enter budget">
-  <button onclick="saveBudget()">Save</button>
-</div>
+      <!-- DASHBOARD -->
+      <section class="page active" id="tab-dashboard">
+        <div class="greet-bar">
+          <p class="greet-text">Hey <strong id="greet-name">friend</strong>! 👋</p>
+          <p class="greet-month" id="greet-month"></p>
+        </div>
 
-<!-- DASHBOARD -->
-<section id="tab-dashboard" class="page active">
+        <!-- Budget Card - always visible, no toggle -->
+        <div class="budget-set-card">
+          <p class="bsc-title">💰 Monthly Budget</p>
+          <div class="bsc-row">
+            <div class="bsc-input-wrap">
+              <span class="bsc-prefix">Rs.</span>
+              <input type="number" id="budget-input" class="bsc-input" placeholder="Enter pocket money / income" min="0" />
+            </div>
+            <button class="bsc-btn" onclick="saveBudget()">Set ✓</button>
+          </div>
+          <p class="bsc-hint" id="bsc-hint"></p>
+        </div>
 
-<div class="card">
-  <p>Budget</p>
-  <h2 id="s-budget">0</h2>
-</div>
+        <!-- Stats -->
+        <div class="hero-card">
+          <div class="hero-top">
+            <div>
+              <p class="hero-label">Budget</p>
+              <p class="hero-amount" id="s-budget">Rs. 0</p>
+            </div>
+            <div style="text-align:right;">
+              <p class="hero-label">Spent</p>
+              <p class="hero-spent" id="s-spent">Rs. 0</p>
+            </div>
+          </div>
+          <div class="hero-bar-wrap">
+            <div class="hero-bar"><div class="hero-bar-fill" id="progress-fill"></div></div>
+            <span class="hero-pct" id="s-pct">0%</span>
+          </div>
+          <div class="hero-bottom">
+            <span class="hero-left-label" id="leftover-label">Remaining</span>
+            <span class="hero-left-val" id="s-left">Rs. 0</span>
+          </div>
+        </div>
 
-<div class="card">
-  <p>Spent</p>
-  <h2 id="s-spent">0</h2>
-</div>
+        <div class="section-header">
+          <h2 class="section-title">Expenses</h2>
+          <span class="badge" id="exp-count">0</span>
+        </div>
+        <div id="expense-list"></div>
+      </section>
 
-<div class="card">
-  <p>Remaining</p>
-  <h2 id="s-left">0</h2>
-</div>
+      <!-- ADD EXPENSE -->
+      <section class="page" id="tab-add">
+        <h2 class="page-heading">Add Expense 💸</h2>
+        <div class="add-card">
+          <p class="field-label">Category</p>
+          <div class="cat-chips" id="cat-chips"></div>
 
-<div id="progress">
-  <div id="progress-fill"></div>
-</div>
+          <p class="field-label">Amount</p>
+          <div class="amt-wrap">
+            <span class="amt-prefix">Rs.</span>
+            <input type="number" id="exp-amount" class="amt-input" placeholder="0" min="0" />
+          </div>
 
-<h3>Expenses</h3>
-<div id="expense-list"></div>
+          <p class="field-label">Date</p>
+          <input class="field" type="date" id="exp-date" />
 
-</section>
+          <p class="field-label">Place / Shop <span class="optional">(optional)</span></p>
+          <input class="field" type="text" id="exp-place" placeholder="e.g. Al-Fatah, School canteen" />
 
-<!-- ADD EXPENSE -->
-<section id="tab-add" class="page">
+          <p class="field-label">Note <span class="optional">(optional)</span></p>
+          <textarea class="field" id="exp-note" rows="2" placeholder="Any extra detail..."></textarea>
 
-<input id="exp-amount" type="number" placeholder="Amount">
-<input id="exp-date" type="date">
+          <button class="btn-add" onclick="addExpense()">✨ Add Expense</button>
+        </div>
+      </section>
 
-<input id="exp-place" placeholder="Place">
-<input id="exp-note" placeholder="Note">
+      <!-- HISTORY -->
+      <section class="page" id="tab-history">
+        <h2 class="page-heading">History 📅</h2>
+        <div id="history-list"></div>
+      </section>
 
-<div id="cat-chips"></div>
+      <!-- SETTINGS -->
+      <section class="page" id="tab-settings">
+        <h2 class="page-heading">Settings ⚙️</h2>
 
-<button onclick="addExpense()">Add Expense</button>
+        <div class="settings-card">
+          <h3 class="settings-title">✨ Custom Categories</h3>
+          <p class="settings-sub">Add your own spending categories.</p>
+          <div class="settings-row">
+            <input class="field" type="text" id="new-cat-name" placeholder="Category name" />
+            <input class="field emoji-field" type="text" id="new-cat-icon" placeholder="😊" maxlength="2" />
+            <button class="btn-save" onclick="addCustomCat()">Add</button>
+          </div>
+          <div class="custom-cat-list" id="custom-cat-list"></div>
+        </div>
 
-</section>
+        <div class="settings-card">
+          <h3 class="settings-title">🔒 Change PIN</h3>
+          <input class="field" type="password" id="old-pin" placeholder="Current PIN" style="margin-bottom:10px;" />
+          <input class="field" type="password" id="new-pin" placeholder="New PIN" style="margin-bottom:10px;" />
+          <button class="btn-save" onclick="changePin()">Update PIN</button>
+          <p id="pin-msg" style="color:#34c77b;font-size:13px;margin-top:8px;display:none;">✅ PIN updated!</p>
+        </div>
 
-<!-- HISTORY -->
-<section id="tab-history" class="page">
-<div id="history-list"></div>
-</section>
+        <div class="settings-card danger-card">
+          <h3 class="settings-title">🗑️ Clear Month Data</h3>
+          <p class="settings-sub">Delete all expenses for the current month.</p>
+          <button class="btn-danger" onclick="clearMonth()">Clear This Month</button>
+        </div>
+      </section>
 
-<!-- NAV -->
-<nav class="bottom">
+    </main>
+  </div>
 
-<button class="nav-btn active" onclick="showTab('dashboard')">
-🏠
-</button>
-
-<button class="nav-btn" onclick="showTab('add')">
-➕
-</button>
-
-<button class="nav-btn" onclick="showTab('history')">
-📜
-</button>
-
-</nav>
-
-</div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
