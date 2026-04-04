@@ -451,11 +451,28 @@ function showTab(name) {
   if (btn) btn.classList.add('active');
   if (name === 'add') {
     renderCategoryChips();
-    document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+    setTodayDate();
   }
   if (name === 'history')  renderHistory();
   if (name === 'settings') renderCustomCats();
 }
 
+// ── DATE HELPER ──
+function setTodayDate() {
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth() + 1).padStart(2, '0');
+  const dd    = String(today.getDate()).padStart(2, '0');
+  document.getElementById('exp-date').value = yyyy + '-' + mm + '-' + dd;
+}
+
+// Auto-refresh date every 60 seconds so it updates at midnight
+function startDateAutoRefresh() {
+  setInterval(function() {
+    setTodayDate();
+  }, 60000);
+}
+
 // ── BOOT ──
 initLock();
+startDateAutoRefresh();
